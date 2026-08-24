@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String          @id @default(uuid())
+  name            String
+  email           String          @unique
+  password        String
+  role            String          @default("CUSTOMER")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  bookings        Booking[]
+  heldSeats       ShowSeat[]
+  waitlistEntries WaitlistEntry[]
+  organizedEvents Event[]
+}
+
+model Venue {
+  id         String      @id @default(uuid())
+  name       String
+  city       String
+  address    String
+  totalRows  Int
+  totalCols  Int
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  seats      VenueSeat[]
+  events     Event[]
+}
+
+model VenueSeat {
+  id         String     @id @default(uuid())
+  venueId    String
+  venue      Venue      @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  row        String
+  col        Int
+  seatNumber String
+  category   String     @default("STANDARD")
+  isActive   Boolean    @default(true)
+  showSeats  ShowSeat[]
+}
+
+model Event {
+  id              String     @id @default(uuid())
+  title           String
+  description     String
+  category        String
+  bannerUrl       String
+  durationMinutes Int        @default(120)
+  venueId         String
+  venue           Venue      @relation(fields: [venueId], references: [id])
+  organiserId     String
+  organiser       User       @relation(fields: [organiserId], references: [id])
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  showtimes       Showtime[]
+}
+
+model Showtime {
+  id              String          @id @default(uuid())
+  eventId         String
+  event           Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  startTime       DateTime
+  endTime         DateTime
+  holdTtlMinutes  Int             @default(10)
+  pricing         String
+  createdAt       DateTime        @default(now())
+  seats           ShowSeat[]
+  bookings        Booking[]
+  waitlistEntries WaitlistEntry[]
+}
+
+model ShowSeat {
+  id            String        @id @default(uuid())
+  showtimeId    String
+  showtime      Showtime      @relation(fields: [showtimeId], references: [id], onDelete: Cascade)
+  venueSeatId   String
+  venueSeat     VenueSeat     @relation(fields: [venueSeatId], references: [id])
+  seatNumber    String
+  row           String
+  col           Int
+  category      String
+  price         Float
+  status        String        @default("AVAILABLE")
+  heldByUserId  String?
+  heldByUser    User?         @relation(fields: [heldByUserId], references: [id])
+  holdExpiresAt DateTime?
+  version       Int           @default(0)
+  bookingSeats  BookingSeat[]
+}
+
+model Booking {
+  id            String        @id @default(uuid())
+  bookingRef    String        @unique
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  showtimeId    String
+  showtime      Showtime      @relation(fields: [showtimeId], references: [id])
+  totalAmount   Float
+  status        String        @default("CONFIRMED")
+  qrCode        String
+  customerName  String
+  customerEmail String
+  customerPhone String?
+  createdAt     DateTime      @default(now())
+  cancelledAt   DateTime?
+  seats         BookingSeat[]
+}
+
+model BookingSeat {
+  id         String   @id @default(uuid())
+  bookingId  String
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  showSeatId String
+  showSeat   ShowSeat @relation(fields: [showSeatId], references: [id])
+  seatPrice  Float
+  seatNumber String
+  category   String
+}
+
+model WaitlistEntry {
+  id              String    @id @default(uuid())
+  showtimeId      String
+  showtime        Showtime  @relation(fields: [showtimeId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  category        String
+  status          String    @default("WAITING")
+  allocatedSeatId String?
+  claimToken      String?   @unique
+  offerExpiresAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}

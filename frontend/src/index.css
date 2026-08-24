@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100;
+  }
+}
+
+.perspective-screen {
+  perspective: 400px;
+}
+
+.screen-curve {
+  transform: rotateX(-30deg);
+  box-shadow: 0 15px 30px -10px rgba(99, 102, 241, 0.4);
+}
