@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import streamlit as st
 import sqlite3
 import json
@@ -9,13 +10,15 @@ from PIL import Image
 from datetime import datetime, timedelta
 import pandas as pd
 
+# Page Configuration
 st.set_page_config(
-    page_title="SeatSwift | High-Demand Ticket Booking & Concurrency Engine",
+    page_title="SeatSwift | Ticket Booking & Concurrency Engine",
     page_icon="???",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
+# Custom Styling
 st.markdown('''
 <style>
     .screen-curve {
@@ -73,13 +76,13 @@ def init_db():
         
         e1_id = str(uuid.uuid4())
         c.execute("INSERT INTO events VALUES (?, ?, ?, ?, ?, ?, ?)", (
-            e1_id, "Dune: Part Two (IMAX 70mm)", "Paul Atreides unites with Chani and the Fremen.", "MOVIE",
+            e1_id, "Dune: Part Two (IMAX 70mm)", "Paul Atreides unites with Chani and the Fremen while seeking revenge.", "MOVIE",
             "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1000&auto=format&fit=crop", 166, v1_id
         ))
 
         e2_id = str(uuid.uuid4())
         c.execute("INSERT INTO events VALUES (?, ?, ?, ?, ?, ?, ?)", (
-            e2_id, "Coldplay: Music of the Spheres", "Breathtaking lasers and live stadium tour.", "CONCERT",
+            e2_id, "Coldplay: Music of the Spheres", "Breathtaking lasers, wristbands, and live stadium world tour.", "CONCERT",
             "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=1000&auto=format&fit=crop", 150, v1_id
         ))
 
@@ -221,7 +224,7 @@ if "selected_seats" not in st.session_state: st.session_state.selected_seats = [
 if "hold_expires_at" not in st.session_state: st.session_state.hold_expires_at = None
 
 with st.sidebar:
-    st.markdown("### ??? **SeatSwift Hub**")
+    st.markdown("### \U0001F39F SeatSwift Hub")
     st.caption("Ticket Booking & Concurrency Engine")
     st.divider()
     role = st.selectbox("Role Persona", ["Customer", "Organiser", "Admin"])
@@ -243,10 +246,10 @@ with st.sidebar:
     st.success("Engine: Locks Active | Hold TTL Active | Waitlist Ready")
 
 if st.session_state.user_role == "Customer":
-    tab1, tab2, tab3, tab4 = st.tabs(["?? Book Seats", "??? My Tickets", "? Waitlist", "?? Concurrency Test"])
+    tab1, tab2, tab3, tab4 = st.tabs(["\U0001F3AC Book Seats", "\U0001F39F My Tickets", "\U000023F3 Waitlist", "\U0001F9EA Concurrency Test"])
 
     with tab1:
-        st.markdown("## ?? **Live Events & Visual Seat Selection**")
+        st.markdown("## \U0001F3AC Live Events & Visual Seat Selection")
         conn = get_db()
         c = conn.cursor()
         c.execute("SELECT events.*, venues.name as venue_name, venues.city as venue_city FROM events JOIN venues ON events.venue_id = venues.id")
@@ -264,7 +267,7 @@ if st.session_state.user_role == "Customer":
             c.execute("SELECT * FROM showtimes WHERE event_id = ?", (event['id'],))
             showtimes = c.fetchall()
             if showtimes:
-                st_idx = st.selectbox("Showtime:", range(len(showtimes)), format_func=lambda i: datetime.fromisoformat(showtimes[i]['start_time']).strftime('%a, %b %d ? %I:%M %p'))
+                st_idx = st.selectbox("Showtime:", range(len(showtimes)), format_func=lambda i: datetime.fromisoformat(showtimes[i]['start_time']).strftime('%a, %b %d \u2022 %I:%M %p'))
                 showtime = showtimes[st_idx]
                 st_id = showtime['id']
                 pricing = json.loads(showtime['pricing_json'])
@@ -274,7 +277,7 @@ if st.session_state.user_role == "Customer":
                 avail_count = sum(1 for s in show_seats if s['status'] == 'AVAILABLE')
 
                 st.markdown('<div class="screen-curve"></div><div class="screen-text">STAGE / SCREEN</div>', unsafe_allow_html=True)
-                st.markdown("<div style='text-align:center; font-size:12px; margin-bottom:10px;'>?? Available | ?? Held (TTL) | ?? Booked | ?? Selected</div>", unsafe_allow_html=True)
+                st.markdown("<div style='text-align:center; font-size:12px; margin-bottom:10px;'>\U0001F7E2 Available | \U0001F7E1 Held (TTL) | \U0001F534 Booked | \U0001F7E3 Selected</div>", unsafe_allow_html=True)
 
                 rows = sorted(list(set(s['row'] for s in show_seats)))
                 for r in rows:
@@ -288,11 +291,11 @@ if st.session_state.user_role == "Customer":
                         is_my_hold = (status == 'HELD' and seat['held_by_user'] == st.session_state.user_email)
                         
                         if status == 'BOOKED':
-                            grid_cols[c_idx+1].button(f"? {seat['seat_number']}", key=f"s_{s_id}", disabled=True)
+                            grid_cols[c_idx+1].button(f"\U0000274C {seat['seat_number']}", key=f"s_{s_id}", disabled=True)
                         elif status == 'HELD' and not is_my_hold:
-                            grid_cols[c_idx+1].button(f"? {seat['seat_number']}", key=f"s_{s_id}", disabled=True)
+                            grid_cols[c_idx+1].button(f"\U000023F3 {seat['seat_number']}", key=f"s_{s_id}", disabled=True)
                         else:
-                            style = "?? " if is_sel or is_my_hold else "?? "
+                            style = "\U0001F7E3 " if is_sel or is_my_hold else "\U0001F7E2 "
                             if grid_cols[c_idx+1].button(f"{style}{seat['seat_number']}", key=f"s_{s_id}", help=f"{seat['category']} - ${seat['price']}"):
                                 if is_sel: st.session_state.selected_seats.remove(s_id)
                                 else: st.session_state.selected_seats.append(s_id)
@@ -307,7 +310,7 @@ if st.session_state.user_role == "Customer":
                     
                     b1, b2 = st.columns(2)
                     with b1:
-                        if st.button("?? Hold Selected Seats (10m TTL)", type="primary", use_container_width=True):
+                        if st.button("\U0001F512 Hold Selected Seats (10m TTL)", type="primary", use_container_width=True):
                             ok, res = hold_seats_atomic(st_id, st.session_state.selected_seats, st.session_state.user_email)
                             if ok:
                                 st.session_state.hold_expires_at = res
@@ -315,16 +318,16 @@ if st.session_state.user_role == "Customer":
                                 st.rerun()
                             else: st.error(res)
                     with b2:
-                        if st.button("?? Confirm Checkout & Generate QR Ticket", use_container_width=True):
+                        if st.button("\U0001F4B3 Confirm Checkout & Generate QR Ticket", use_container_width=True):
                             ok, b_ref, qr_data, amt = confirm_booking_db(st_id, st.session_state.selected_seats, st.session_state.user_email, st.session_state.user_name)
                             if ok:
                                 st.session_state.selected_seats = []
                                 st.session_state.hold_expires_at = None
                                 st.balloons()
-                                st.success(f"?? Confirmed! Ref: **{b_ref}**")
+                                st.success(f"\U0001F389 Confirmed! Ref: **{b_ref}**")
                                 qr_bytes = generate_qr_image(qr_data)
                                 st.image(qr_bytes, width=200, caption="Entry QR Code")
-                                st.download_button("?? Download QR Pass", qr_bytes, file_name=f"ticket_{b_ref}.png", mime="image/png")
+                                st.download_button("\U0001F4E5 Download QR Pass", qr_bytes, file_name=f"ticket_{b_ref}.png", mime="image/png")
                             else: st.error(res)
                 elif avail_count == 0:
                     st.warning("Showtime Sold Out!")
@@ -336,7 +339,7 @@ if st.session_state.user_role == "Customer":
         conn.close()
 
     with tab2:
-        st.markdown("## ??? **My Bookings & QR Passes**")
+        st.markdown("## \U0001F39F My Bookings & QR Passes")
         conn = get_db()
         c = conn.cursor()
         c.execute("SELECT bookings.*, events.title as event_title, showtimes.start_time, venues.name as venue_name FROM bookings JOIN showtimes ON bookings.showtime_id = showtimes.id JOIN events ON showtimes.event_id = events.id JOIN venues ON events.venue_id = venues.id WHERE bookings.user_email = ? ORDER BY bookings.created_at DESC", (st.session_state.user_email,))
@@ -345,10 +348,10 @@ if st.session_state.user_role == "Customer":
             st.info("No bookings recorded.")
         else:
             for b in my_bookings:
-                with st.expander(f"??? {b['event_title']} ? Ref: {b['booking_ref']} ({b['status']})", expanded=(b['status'] == 'CONFIRMED')):
+                with st.expander(f"\U0001F39F {b['event_title']} \u2014 Ref: {b['booking_ref']} ({b['status']})", expanded=(b['status'] == 'CONFIRMED')):
                     c.execute("SELECT * FROM booking_seats WHERE booking_id = ?", (b['id'],))
                     seats = c.fetchall()
-                    st.markdown(f"**Showtime:** {datetime.fromisoformat(b['start_time']).strftime('%b %d ? %I:%M %p')} | **Seats:** {', '.join(s['seat_number'] for s in seats)}")
+                    st.markdown(f"**Showtime:** {datetime.fromisoformat(b['start_time']).strftime('%b %d \u2022 %I:%M %p')} | **Seats:** {', '.join(s['seat_number'] for s in seats)}")
                     if b['status'] == 'CONFIRMED':
                         if st.button("Cancel Booking", key=f"c_{b['id']}"):
                             cancel_booking_db(b['id'])
@@ -359,7 +362,7 @@ if st.session_state.user_role == "Customer":
         conn.close()
 
     with tab3:
-        st.markdown("## ? **Waitlist Claim Portal**")
+        st.markdown("## \U000023F3 Waitlist Claim Portal")
         conn = get_db()
         c = conn.cursor()
         c.execute("SELECT waitlist.*, events.title as event_title, show_seats.seat_number FROM waitlist JOIN showtimes ON waitlist.showtime_id = showtimes.id JOIN events ON showtimes.event_id = events.id LEFT JOIN show_seats ON waitlist.allocated_seat_id = show_seats.id WHERE waitlist.user_email = ? ORDER BY waitlist.created_at DESC", (st.session_state.user_email,))
@@ -367,7 +370,7 @@ if st.session_state.user_role == "Customer":
         if not my_w: st.info("No active waitlist entries.")
         else:
             for w in my_w:
-                st.markdown(f"### {w['event_title']} ? Status: `{w['status']}`")
+                st.markdown(f"### {w['event_title']} \u2014 Status: `{w['status']}`")
                 if w['status'] == 'OFFERED':
                     st.success(f"Seat **{w['seat_number']}** is reserved for you until {datetime.fromisoformat(w['offer_expires_at']).strftime('%I:%M:%S %p')}!")
                     if st.button("Claim & Confirm", key=f"claim_{w['id']}", type="primary"):
@@ -381,7 +384,7 @@ if st.session_state.user_role == "Customer":
         conn.close()
 
     with tab4:
-        st.markdown("## ?? **Live Concurrency Test**")
+        st.markdown("## \U0001F9EA Live Concurrency Test")
         if st.button("Run Concurrency Test (10 Parallel Users)"):
             import concurrent.futures
             conn = get_db()
@@ -399,10 +402,10 @@ if st.session_state.user_role == "Customer":
             fail = sum(1 for ok, _ in res if not ok)
             st.metric("Successful Holds", succ)
             st.metric("Rejected Race-Condition Conflicts", fail)
-            if succ == 1 and fail == 9: st.success("?? Exactly 1 user held the seat, 9 were rejected!")
+            if succ == 1 and fail == 9: st.success("\U0001F3C6 Exactly 1 user held the seat, 9 were rejected!")
 
 elif st.session_state.user_role == "Organiser":
-    st.markdown("## ?? **Organiser Revenue & Occupancy Dashboard**")
+    st.markdown("## \U0001F4CA Organiser Revenue & Occupancy Dashboard")
     conn = get_db()
     c = conn.cursor()
     c.execute("SELECT SUM(total_amount) as rev, COUNT(*) as cnt FROM bookings WHERE status = 'CONFIRMED'")
@@ -425,7 +428,7 @@ elif st.session_state.user_role == "Organiser":
     conn.close()
 
 elif st.session_state.user_role == "Admin":
-    st.markdown("## ??? **Admin Venue Builder**")
+    st.markdown("## \U0001F3DB\U0000FE0F Admin Venue Builder")
     conn = get_db()
     c = conn.cursor()
     with st.form("new_v"):
